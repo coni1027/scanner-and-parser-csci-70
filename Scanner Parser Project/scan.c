@@ -13,7 +13,7 @@ static int pushback = FALSE;
 static int charread = '\0';
 
 // Opens file, returns 0 if failure
-int openFile(char *filename){
+int openScanner(char *filename){
     file = fopen(filename,"r");
 
     if (file == NULL) return 0;
@@ -22,7 +22,7 @@ int openFile(char *filename){
 }
 
 // Closes file, rests linenum, pushback, and last char
-void closeFile() {
+void closeScanner() {
     if (file != NULL) {
         fclose(file);
         file = NULL;

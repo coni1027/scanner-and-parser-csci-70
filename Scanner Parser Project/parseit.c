@@ -11,13 +11,13 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (openFile(argv[1]) == 0) {
+    if (openScanner(argv[1]) == 0) {
         fprintf(stderr, "Error: Could not open file %s\n", argv[1]);
         return 1;
     }
  
     parseFile(argv[1]);
  
-    closeFile();
+    closeScanner();
     return 0;
 }

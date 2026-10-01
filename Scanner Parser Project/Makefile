@@ -1,4 +1,4 @@
-all: scanit.exe parseit.exe
+all: scanner.exe parser.exe
 
 token.o: token.c token.h
 	gcc -c token.c
@@ -15,11 +15,11 @@ scanit.o: scanit.c scan.h token.h
 parseit.o: parseit.c parse.h scan.h token.h
 	gcc -c parseit.c
 
-scanit.exe: scanit.o token.o scan.o
-	gcc -o scanit.exe scanit.o token.o scan.o
+scanner.exe: scanit.o token.o scan.o
+	gcc -o scanner.exe scanit.o token.o scan.o
 
-parseit.exe: parseit.o token.o parse.o scan.o
-	gcc -o parseit.exe parseit.o token.o parse.o scan.o
+parser.exe: parseit.o token.o parse.o scan.o
+	gcc -o parser.exe parseit.o token.o parse.o scan.o
 
 clean:
 	rm -f *.exe *.o
