@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 
     // Makes a string for scanner output file name
     char fileString[300];
-    char *lastPeriod = strchr(argv[1],'.');
+    char *lastPeriod = strrchr(argv[1],'.');
 
     // Checks if lastPeriod exists, if not write from the last, if yes write before the period
     int baseLength = lastPeriod ? (int)(lastPeriod - argv[1]) : (int)strlen(argv[1]);
@@ -35,10 +35,17 @@ int main(int argc, char *argv[]) {
     // Writes the file
     FILE *writeFile = fopen(fileString, "w");
 
+    // Safeguard in writing file
+    if (writeFile == NULL) {
+        fprintf(stderr, "Error: Could not create file %s\n", fileString);
+        closeScanner();
+        return 1;
+    }
+
     // Main loop
     struct token t = gettoken();
     while (t.id != TokenEndOfFile) {
-        printf("%s %s\n", tokennames[t.id], t.lexeme);
+        // printf("%s %s\n", tokennames[t.id], t.lexeme);
         fprintf(writeFile,"%s %s\n", tokennames[t.id], t.lexeme);
 
         t = gettoken();

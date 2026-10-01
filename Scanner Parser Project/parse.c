@@ -7,6 +7,9 @@
 // A lookahead for the next unconsumed token
 static struct token tok;
 
+// Output file for parse messages
+static FILE *outputFile;
+
 // Forward declarations for productions
 static int Blk();
 static int Stm();
@@ -20,7 +23,7 @@ static void advance(){
 // Checks if it is the expected token, then advance
 static int match(int expected){
     if (tok.id != expected) {
-        printf("Symbol expected\n");
+        fprintf(outputFile,"Symbol expected\n");
         return 0;
     }
     
@@ -113,7 +116,7 @@ static int Rel(){
             advance();
             return 1;
         default:
-            printf("Missing relational operator\n");
+            fprintf(outputFile,"Missing relational operator\n");
             return 0;
     }
 }
@@ -154,11 +157,11 @@ static int Iffollow(){
         if (match(TokenElse) && Blk() && match(TokenEndIf) && match(TokenSemicolon))
             return 1;
 
-        printf("Incomplete if Statement\n");
+        fprintf(outputFile,"Incomplete if Statement\n");
         return 0;
     default:
         // Neither ENDIF nor ELSE: failed match
-        printf("Symbol expected\n");
+        fprintf(outputFile,"Symbol expected\n");
         return 0;
     }
 }
@@ -173,7 +176,7 @@ static int Stm(){
             ok = match(TokenIdentifier) && match(TokenAssign)
             && Exp() && match(TokenSemicolon);
             
-            if (ok) printf("Assignment Statement Recognized\n");
+            if (ok) fprintf(outputFile,"Assignment Statement Recognized\n");
             break;
  
         case TokenPrint:
@@ -181,15 +184,15 @@ static int Stm(){
             && Arg() && Argfollow() && match(TokenRightParen) 
             && match(TokenSemicolon);
             
-            if (ok) printf("Print Statement Recognized\n");
+            if (ok) fprintf(outputFile,"Print Statement Recognized\n");
             break;
  
         case TokenIf:
-            printf("If Statement Begins\n");
+            fprintf(outputFile,"If Statement Begins\n");
             ok = match(TokenIf) && Cnd() && match(TokenColon)
             && Blk() && Iffollow();
             
-            if (ok) printf("If Statement Ends\n");
+            if (ok) fprintf(outputFile,"If Statement Ends\n");
             break;
  
         default:
@@ -197,7 +200,7 @@ static int Stm(){
             break;
     }
 
-    if (!ok) printf("Invalid Statement\n");
+    if (!ok) fprintf(outputFile,"Invalid Statement\n");
     return ok;
 }
 
@@ -214,19 +217,16 @@ static int Blk(void) {
 // Prg -> Blk EndOfFile
 static int Prg(char *filename) {
     if (Blk() && match(TokenEndOfFile)) {
-        printf("%s is a valid SimpCalc program\n", filename);
+        fprintf(outputFile,"%s is a valid SimpCalc program", filename);
         return 1;
     }
 
-    printf("%s is not a valid SimpCalc program\n", filename);
+    fprintf(outputFile,"%s is not a valid SimpCalc program", filename);
     return 0;
 }
 
-int parseFile(char *filename){
+int parseFile(char *filename, FILE *parserOutput){
+    outputFile = parserOutput;
     advance();
     return Prg(filename);
 }
-
-
-
-
