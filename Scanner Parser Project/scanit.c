@@ -46,8 +46,13 @@ int main(int argc, char *argv[]) {
     struct token t = gettoken();
     while (t.id != TokenEndOfFile) {
         // printf("%s %s\n", tokennames[t.id], t.lexeme);
-        fprintf(writeFile,"%s %s\n", tokennames[t.id], t.lexeme);
 
+        // Lexical errors get their own message; other tokens print name and lexeme
+        if (t.id == TokenError)
+            fprintf(writeFile,"Lexical Error: %s %s (line %d)\n", getErrorMessage(), t.lexeme, getErrorLine());
+        else
+            fprintf(writeFile,"%s %s\n", tokennames[t.id], t.lexeme);
+ 
         t = gettoken();
     }
 
