@@ -14,6 +14,10 @@ void closeScanner();
 // Helper function in getting the line number of file read
 int getLineNumber();
 
+// Message and line number of the most recent Error token
+const char *getErrorMessage();
+int getErrorLine();
+
 // Specs explicitly said gettoken
 // why is it not in camel case fml
 struct token gettoken();

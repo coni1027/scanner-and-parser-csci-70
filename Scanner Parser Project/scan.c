@@ -12,6 +12,10 @@ static int linenum = 1;
 static int pushback = FALSE;
 static int charread = '\0';
 
+// Lexical error info for most recent Error token
+static const char *errorMessage = "";
+static int errorLine = 1;
+
 // Opens file, returns 0 if failure
 int openScanner(char *filename){
     file = fopen(filename,"r");
@@ -36,6 +40,22 @@ void closeScanner() {
 // Helper, returns linenum
 int getLineNumber() {
     return linenum;
+}
+
+// Returns message for the most recent Error token
+const char *getErrorMessage(){
+    return errorMessage;
+}
+
+// Returns the line where the most recent Error token started
+int getErrorLine() {
+    return errorLine;
+}
+
+// Marks token as lexical error with a given message
+static void setError(struct token *t, const char *message){
+    t->id = TokenError;
+    errorMessage = message;
 }
 
 // Gets character
@@ -182,7 +202,7 @@ struct token gettoken() {
             // S3 to Error if undefined input
             if (!isdigit(ch)) {
                 unread();
-                t.id = TokenError;
+                setError(&t, "Invalid number");
                 return t;
             }
 
@@ -207,7 +227,7 @@ struct token gettoken() {
             // S5 or S6 to Error if undefined input
             if (!isdigit(ch)) {
                 unread();
-                t.id = TokenError;
+                setError(&t, "Invalid number");
                 return t;
             }
 
@@ -243,7 +263,7 @@ struct token gettoken() {
         // S8 to Error, if newline or EOF
         else {
             unread();
-            t.id = TokenError;
+            setError(&t, "Unterminated string");
         }
 
         return t;
@@ -263,8 +283,11 @@ struct token gettoken() {
         case '*': t.id = nextIs('*', &t, &len) ? TokenRaise : TokenMultiply;        break;  // S12
         case '<': t.id = nextIs('=', &t, &len) ? TokenLTEqual : TokenLessThan;      break;  // S13
         case '>': t.id = nextIs('=', &t, &len) ? TokenGTEqual : TokenGreaterThan;   break;  // S14
-        case '!': t.id = nextIs('=', &t, &len) ? TokenNotEqual : TokenError;        break;  // S15
-        default: t.id = TokenError;         break;  // any other character, error
+        case '!':
+            if (nextIs('=',&t, &len))   t.id = TokenNotEqual;
+            else                        setError(&t, "Invalid operator");
+            break;
+        default: setError(&t, "Invalid character");     break;                              // any other character, error
     }
     return t;
 }
