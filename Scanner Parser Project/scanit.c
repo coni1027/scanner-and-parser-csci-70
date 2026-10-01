@@ -49,8 +49,10 @@ static int scanFile(char *filename) {
     struct token t = gettoken();
     while (t.id != TokenEndOfFile) {
         // Lexical errors get their own message, other tokens print name and lexeme
-        if (t.id == TokenError)
-            fprintf(writeFile,"Lexical Error: %s %s (line %d)\n", getErrorMessage(), t.lexeme, getErrorLine());
+        if (t.id == TokenError) {
+            fprintf(writeFile,"Lexical Error: %s (line #%d)\n", getErrorMessage(), getTokenLine());
+            fprintf(writeFile,"%s\n", tokennames[TokenError]);
+        }
         else
             fprintf(writeFile,"%s %s\n", tokennames[t.id], t.lexeme);
  

@@ -10,23 +10,41 @@ static struct token tok;
 // Output file for parse messages
 static FILE *outputFile;
 
+// Set once the first parse error is printed; after that nothing else is printed
+static int aborted = 0;
+
 // Forward declarations for productions
 static int Blk();
 static int Stm();
 static int Exp();
+
+// Prints a parse error only for the first error, then the parse aborts
+static void parseError(const char *message){
+    if (aborted) return;
+
+    fprintf(outputFile,"Parse Error: %s. (line #%d)\n", message, getTokenLine());
+    aborted = 1;
+}
+
+// Parse error for a missing terminal, e.g. "Assign expected"
+static void expectedError(int expected){
+    char message[64];
+    snprintf(message, sizeof(message), "%s expected", tokennames[expected]);
+    parseError(message);
+}
 
 // Moves to the next token, also lexical errors are reported
 static void advance(){
     tok = gettoken();
 
     if (tok.id == TokenError)
-        fprintf(outputFile,"Lexical Error: %s %s (line %d)\n", getErrorMessage(), tok.lexeme, getErrorLine());
+        fprintf(outputFile,"Lexical Error: %s (line #%d)\n", getErrorMessage(), getTokenLine());
 }
 
 // Checks if it is the expected token, then advance
 static int match(int expected){
     if (tok.id != expected) {
-        fprintf(outputFile,"Symbol expected\n");
+        expectedError(expected);
         return 0;
     }
     
@@ -119,7 +137,7 @@ static int Rel(){
             advance();
             return 1;
         default:
-            fprintf(outputFile,"Missing relational operator\n");
+            parseError("Missing relational operator");
             return 0;
     }
 }
@@ -160,11 +178,11 @@ static int Iffollow(){
         if (match(TokenElse) && Blk() && match(TokenEndIf) && match(TokenSemicolon))
             return 1;
 
-        fprintf(outputFile,"Incomplete if Statement\n");
+        parseError("Incomplete if Statement");
         return 0;
     default:
-        // Neither ENDIF nor ELSE: failed match
-        fprintf(outputFile,"Symbol expected\n");
+        // Neither ENDIF nor ELSE: report the missing ENDIF
+        expectedError(TokenEndIf);
         return 0;
     }
 }
@@ -203,7 +221,7 @@ static int Stm(){
             break;
     }
 
-    if (!ok) fprintf(outputFile,"Invalid Statement\n");
+    if (!ok) parseError("Invalid Statement");
     return ok;
 }
 
@@ -220,16 +238,17 @@ static int Blk(void) {
 // Prg -> Blk EndOfFile
 static int Prg(char *filename) {
     if (Blk() && match(TokenEndOfFile)) {
-        fprintf(outputFile,"%s is a valid SimpCalc program", filename);
+        fprintf(outputFile,"%s is a valid SimpCalc program\n", filename);
         return 1;
     }
 
-    fprintf(outputFile,"%s is not a valid SimpCalc program", filename);
+    // Invalid: the first error was already printed, so nothing more is printed
     return 0;
 }
 
 int parseFile(char *filename, FILE *parserOutput){
     outputFile = parserOutput;
+    aborted = 0;    // reset for each file
     advance();
     return Prg(filename);
 }

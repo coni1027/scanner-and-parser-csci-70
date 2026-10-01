@@ -28,7 +28,7 @@ const char *tokennames[] = {
     "Print",
     "If",
     "Else",
-    "EndIf",
+    "Endif",
     "Sqrt",
     "And",
     "Or",

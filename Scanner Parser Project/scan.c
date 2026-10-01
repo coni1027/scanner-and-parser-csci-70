@@ -12,9 +12,11 @@ static int linenum = 1;
 static int pushback = FALSE;
 static int charread = '\0';
 
-// Lexical error info for most recent Error token
+// Lexical error message for the most recent Error token
 static const char *errorMessage = "";
-static int errorLine = 1;
+
+// Line where the most recent token started (for error messages)
+static int tokenLine = 1;
 
 // Opens file, returns 0 if failure
 int openScanner(char *filename){
@@ -47,14 +49,15 @@ const char *getErrorMessage(){
     return errorMessage;
 }
 
-// Returns the line where the most recent Error token started
-int getErrorLine() {
-    return errorLine;
+// Returns the line where the most recent token started
+int getTokenLine() {
+    return tokenLine;
 }
 
 // Marks token as lexical error with a given message
 static void setError(struct token *t, const char *message){
     t->id = TokenError;
+    t->lexeme[0] = '\0';   // error tokens are printed without a lexeme
     errorMessage = message;
 }
 
@@ -133,6 +136,9 @@ struct token gettoken() {
         // Loops S0
         if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')    continue;
 
+        // A token (or comment) starts here: remember its line
+        tokenLine = linenum;
+
         // S0 to S9, divide
         if (ch == '/') {
             int next = myGetChar();
@@ -201,8 +207,8 @@ struct token gettoken() {
 
             // S3 to Error if undefined input
             if (!isdigit(ch)) {
-                unread();
-                setError(&t, "Invalid number");
+                // offending char is consumed along with the bad number
+                setError(&t, "Invalid number format");
                 return t;
             }
 
@@ -226,8 +232,8 @@ struct token gettoken() {
 
             // S5 or S6 to Error if undefined input
             if (!isdigit(ch)) {
-                unread();
-                setError(&t, "Invalid number");
+                // offending char is consumed along with the bad number
+                setError(&t, "Invalid number format");
                 return t;
             }
 
@@ -285,9 +291,12 @@ struct token gettoken() {
         case '>': t.id = nextIs('=', &t, &len) ? TokenGTEqual : TokenGreaterThan;   break;  // S14
         case '!':
             if (nextIs('=',&t, &len))   t.id = TokenNotEqual;
-            else                        setError(&t, "Invalid operator");
+            else {
+                myGetChar();    // consume the char after ! as part of the error
+                setError(&t, "Illegal character/character sequence");
+            }
             break;
-        default: setError(&t, "Invalid character");     break;                              // any other character, error
+        default: setError(&t, "Illegal character/character sequence");     break;                              // any other character, error
     }
     return t;
 }
