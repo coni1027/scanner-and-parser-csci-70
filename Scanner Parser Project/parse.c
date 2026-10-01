@@ -15,9 +15,12 @@ static int Blk();
 static int Stm();
 static int Exp();
 
-// Moves to the next token
+// Moves to the next token, also lexical errors are reported
 static void advance(){
     tok = gettoken();
+
+    if (tok.id == TokenError)
+        fprintf(outputFile,"Lexical Error: %s %s (line %d)\n", getErrorMessage(), tok.lexeme, getErrorLine());
 }
 
 // Checks if it is the expected token, then advance
